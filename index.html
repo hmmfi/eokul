@@ -1,1 +1,488 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hi - Beni Ne Kadar Tanıyorsun ?</title>
+
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #f8fbff, #eaf2ff);
+      color: #111827;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .top-logo {
+      display: block;
+      width: 135px;
+      height: auto;
+      margin: 8px auto 8px auto;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 22px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 12px 35px rgba(37, 99, 235, 0.12);
+      margin-top: 20px;
+      border: 1px solid #e5edff;
+    }
+
+    h1 {
+      font-size: 24px;
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    .desc {
+      text-align: center;
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+
+    .input {
+      width: 100%;
+      border: 2px solid #dbeafe;
+      background: #f8fbff;
+      border-radius: 16px;
+      padding: 15px;
+      margin-top: 14px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .question {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .option {
+      width: 100%;
+      border: 2px solid #dbeafe;
+      background: #f8fbff;
+      border-radius: 16px;
+      padding: 15px;
+      margin-bottom: 12px;
+      font-size: 17px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .selected {
+      border-color: #2563eb;
+      background: #dbeafe;
+    }
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 15px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #2563eb, #06b6d4);
+      color: white;
+    }
+
+    .btn-green {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-light {
+      background: #eef2ff;
+      color: #1e3a8a;
+    }
+
+    .progress {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 14px;
+    }
+
+    .result-preview {
+      width: 100%;
+      border-radius: 24px;
+      margin-top: 14px;
+      border: 1px solid #e5edff;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.14);
+    }
+
+    .hidden { display: none; }
+
+    .error {
+      text-align: center;
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    .loading {
+      text-align: center;
+      color: #6b7280;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <img id="mainLogo" class="top-logo" src="hi_logo_trans.png" alt="Hi Logo">
+  <div class="subtitle">Beni Ne Kadar Tanıyorsun ?</div>
+
+  <div id="loading" class="loading">Test yükleniyor...</div>
+
+  <div id="errorBox" class="card hidden">
+    <p class="error">Test bulunamadı veya pasif durumda.</p>
+  </div>
+
+  <div id="startBox" class="card hidden">
+    <p class="desc">
+      Senin için hazırladığım soruları cevapla, beni ne kadar iyi tanıdığını göster.
+    </p>
+
+    <button class="btn btn-primary" onclick="showNameBox()">
+      Teste Başla
+    </button>
+  </div>
+
+  <div id="nameBox" class="card hidden">
+    <h1>Adınızı Giriniz</h1>
+
+    <input id="solverNameInput" class="input" type="text" placeholder="Adınız...">
+    <button class="btn btn-primary" onclick="startTestWithName()">Devam Et</button>
+    <button class="btn btn-light" onclick="skipName()">Atla</button>
+  </div>
+
+  <div id="quizBox" class="card hidden">
+    <div id="progress" class="progress"></div>
+    <div id="questionText" class="question"></div>
+    <div id="optionsBox"></div>
+
+    <button class="btn btn-primary" onclick="nextQuestion()">Devam Et</button>
+  </div>
+
+  <div id="resultBox" class="card hidden">
+    <h1>Sonucun Hazır 🎉</h1>
+
+    <img id="resultImage" class="result-preview" alt="Sonuç Görseli">
+
+    <button class="btn btn-green" onclick="shareResultImage()">
+      Sonucu Arkadaşınla Paylaş
+    </button>
+
+    <button class="btn btn-primary" onclick="openApp()">
+      Kendi Testini Oluştur
+    </button>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2qbC0HS1icS3qlOcd2-fR7n6SPpdo3bM",
+    authDomain: "ogrencitakip-d2af3.firebaseapp.com",
+    databaseURL: "https://ogrencitakip-d2af3.firebaseio.com",
+    projectId: "ogrencitakip-d2af3",
+    storageBucket: "e-okul-c3181.appspot.com",
+    messagingSenderId: "880504598202",
+    appId: "1:880504598202:android:97c51b672fe015e4a2dc83"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let testId = null;
+  let testData = null;
+  let questions = [];
+  let currentIndex = 0;
+  let selectedIndex = -1;
+  let correctCount = 0;
+  let solverName = "";
+  let resultPercent = 0;
+  let resultBlob = null;
+
+  window.onload = async function () {
+    const params = new URLSearchParams(window.location.search);
+    testId = params.get("testId");
+
+    if (!testId) {
+      showError();
+      return;
+    }
+
+    try {
+      const snapshot = await get(ref(db, "tests/" + testId));
+
+      if (!snapshot.exists()) {
+        showError();
+        return;
+      }
+
+      testData = snapshot.val();
+
+      if (testData.active === false || testData.isActive === false) {
+        showError();
+        return;
+      }
+
+      if (Array.isArray(testData.questions)) {
+        questions = testData.questions;
+      } else if (testData.questions) {
+        questions = Object.values(testData.questions);
+      }
+
+      if (questions.length === 0) {
+        showError();
+        return;
+      }
+
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("startBox").classList.remove("hidden");
+
+    } catch (e) {
+      showError();
+    }
+  };
+
+  function showError() {
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("errorBox").classList.remove("hidden");
+  }
+
+  window.showNameBox = function () {
+    document.getElementById("startBox").classList.add("hidden");
+    document.getElementById("nameBox").classList.remove("hidden");
+  };
+
+  window.startTestWithName = function () {
+    solverName = document.getElementById("solverNameInput").value.trim();
+    startTest();
+  };
+
+  window.skipName = function () {
+    solverName = "";
+    startTest();
+  };
+
+  function startTest() {
+    currentIndex = 0;
+    selectedIndex = -1;
+    correctCount = 0;
+
+    document.getElementById("nameBox").classList.add("hidden");
+    document.getElementById("quizBox").classList.remove("hidden");
+    document.getElementById("resultBox").classList.add("hidden");
+
+    showQuestion();
+  }
+
+  function showQuestion() {
+    selectedIndex = -1;
+
+    const q = questions[currentIndex];
+
+    document.getElementById("progress").innerText =
+      (currentIndex + 1) + " / " + questions.length;
+
+    document.getElementById("questionText").innerText =
+      q.question || q.questionText || q.text || "Soru";
+
+    const optionsBox = document.getElementById("optionsBox");
+    optionsBox.innerHTML = "";
+
+    const options = getOptions(q);
+
+    options.forEach((option, index) => {
+      const btn = document.createElement("button");
+      btn.className = "option";
+      btn.innerText = String.fromCharCode(65 + index) + ") " + getOptionText(option);
+
+      btn.onclick = function () {
+        selectedIndex = index;
+
+        document.querySelectorAll(".option").forEach(el => {
+          el.classList.remove("selected");
+        });
+
+        btn.classList.add("selected");
+      };
+
+      optionsBox.appendChild(btn);
+    });
+  }
+
+  window.nextQuestion = function () {
+    if (selectedIndex === -1) {
+      alert("Lütfen bir cevap seç.");
+      return;
+    }
+
+    const q = questions[currentIndex];
+
+    const correctIndex =
+      typeof q.correctIndex === "number"
+        ? q.correctIndex
+        : parseInt(q.correctIndex || "0");
+
+    if (selectedIndex === correctIndex) {
+      correctCount++;
+    }
+
+    currentIndex++;
+
+    if (currentIndex < questions.length) {
+      showQuestion();
+    } else {
+      showResult();
+    }
+  };
+
+  async function showResult() {
+    document.getElementById("quizBox").classList.add("hidden");
+    document.getElementById("resultBox").classList.remove("hidden");
+
+    resultPercent = Math.round((correctCount / questions.length) * 100);
+    await createResultImage(resultPercent);
+  }
+
+  async function createResultImage(percent) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1080;
+
+    const ctx = canvas.getContext("2d");
+
+    const bg = ctx.createLinearGradient(0, 0, 1080, 1080);
+    bg.addColorStop(0, "#f8fbff");
+    bg.addColorStop(1, "#eaf2ff");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    roundRect(ctx, 90, 90, 900, 900, 48);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+
+    ctx.shadowColor = "rgba(37,99,235,0.18)";
+    ctx.shadowBlur = 28;
+    ctx.shadowOffsetY = 14;
+
+    roundRect(ctx, 90, 90, 900, 900, 48);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+
+    ctx.shadowColor = "transparent";
+
+    const logo = document.getElementById("mainLogo");
+    try {
+      ctx.drawImage(logo, 365, 145, 350, 350);
+    } catch (e) {}
+
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 48px Arial";
+    ctx.fillText("Başarı Yüzdesi", 540, 535);
+
+    const gradient = ctx.createLinearGradient(300, 610, 780, 760);
+    gradient.addColorStop(0, "#7c3aed");
+    gradient.addColorStop(0.55, "#2563eb");
+    gradient.addColorStop(1, "#06b6d4");
+
+    ctx.fillStyle = gradient;
+    ctx.font = "bold 150px Arial";
+    ctx.fillText("%" + percent, 540, 705);
+
+    ctx.fillStyle = "#374151";
+    ctx.font = "bold 42px Arial";
+    ctx.fillText("🔥 Seni %" + resultPercent + " tanıyorum!", 540, 790);
+    const dataUrl = canvas.toDataURL("image/png");
+    document.getElementById("resultImage").src = dataUrl;
+    resultBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  }
+
+  window.shareResultImage = async function () {
+    const shareText ="";
+
+    if (resultBlob && navigator.canShare) {
+      const file = new File([resultBlob], "hi-sonuc.png", { type: "image/png" });
+
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            text: shareText,
+            title: "Hi Sonucum"
+          });
+          return;
+        } catch (e) {}
+      }
+    }
+
+    window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank");
+  };
+
+  window.openApp = function () {
+    window.location.href =
+      "https://play.google.com/store/apps/details?id=com.hmmi.eokul";
+  };
+
+  function getOptions(q) {
+    if (Array.isArray(q.options)) return q.options;
+    if (q.options) return Object.values(q.options);
+    return [];
+  }
+
+  function getOptionText(option) {
+    if (typeof option === "string") return option;
+    if (option && option.text) return option.text;
+    return "";
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+</script>
+
+</body>
+</html>
 
