@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hi - Beni Ne Kadar Tanıyorsun ?</title>
+  <title>E-Okul - Beni Ne Kadar Tanıyorsun?</title>
 
   <style>
     * { box-sizing: border-box; font-family: Arial, sans-serif; }
@@ -56,17 +56,6 @@
       font-size: 16px;
       line-height: 1.5;
       margin-top: 12px;
-    }
-
-    .input {
-      width: 100%;
-      border: 2px solid #dbeafe;
-      background: #f8fbff;
-      border-radius: 16px;
-      padding: 15px;
-      margin-top: 14px;
-      font-size: 16px;
-      outline: none;
     }
 
     .question {
@@ -154,12 +143,16 @@
 <div class="container">
 
   <img id="mainLogo" class="top-logo" src="hi_logo_trans.png" alt="Hi Logo">
-  <div class="subtitle">Beni Ne Kadar Tanıyorsun ?</div>
+  <div class="subtitle">Beni Ne Kadar Tanıyorsun?</div>
 
   <div id="loading" class="loading">Test yükleniyor...</div>
 
   <div id="errorBox" class="card hidden">
     <p class="error">Test bulunamadı veya pasif durumda.</p>
+
+    <button class="btn btn-primary" onclick="openApp()">
+      Kendi Testini Oluştur
+    </button>
   </div>
 
   <div id="startBox" class="card hidden">
@@ -167,17 +160,13 @@
       Senin için hazırladığım soruları cevapla, beni ne kadar iyi tanıdığını göster.
     </p>
 
-    <button class="btn btn-primary" onclick="showNameBox()">
+    <button class="btn btn-primary" onclick="startTest()">
       Teste Başla
     </button>
-  </div>
 
-  <div id="nameBox" class="card hidden">
-    <h1>Adınızı Giriniz</h1>
-
-    <input id="solverNameInput" class="input" type="text" placeholder="Adınız...">
-    <button class="btn btn-primary" onclick="startTestWithName()">Devam Et</button>
-    <button class="btn btn-light" onclick="skipName()">Atla</button>
+    <button class="btn btn-light" onclick="openApp()">
+      Kendi Testini Oluştur
+    </button>
   </div>
 
   <div id="quizBox" class="card hidden">
@@ -185,7 +174,9 @@
     <div id="questionText" class="question"></div>
     <div id="optionsBox"></div>
 
-    <button class="btn btn-primary" onclick="nextQuestion()">Devam Et</button>
+    <button class="btn btn-primary" onclick="nextQuestion()">
+      Devam Et
+    </button>
   </div>
 
   <div id="resultBox" class="card hidden">
@@ -227,7 +218,6 @@
   let currentIndex = 0;
   let selectedIndex = -1;
   let correctCount = 0;
-  let solverName = "";
   let resultPercent = 0;
   let resultBlob = null;
 
@@ -279,32 +269,17 @@
     document.getElementById("errorBox").classList.remove("hidden");
   }
 
-  window.showNameBox = function () {
-    document.getElementById("startBox").classList.add("hidden");
-    document.getElementById("nameBox").classList.remove("hidden");
-  };
-
-  window.startTestWithName = function () {
-    solverName = document.getElementById("solverNameInput").value.trim();
-    startTest();
-  };
-
-  window.skipName = function () {
-    solverName = "";
-    startTest();
-  };
-
-  function startTest() {
+  window.startTest = function () {
     currentIndex = 0;
     selectedIndex = -1;
     correctCount = 0;
 
-    document.getElementById("nameBox").classList.add("hidden");
+    document.getElementById("startBox").classList.add("hidden");
     document.getElementById("quizBox").classList.remove("hidden");
     document.getElementById("resultBox").classList.add("hidden");
 
     showQuestion();
-  }
+  };
 
   function showQuestion() {
     selectedIndex = -1;
@@ -388,10 +363,6 @@
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, 1080, 1080);
 
-    roundRect(ctx, 90, 90, 900, 900, 48);
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
-
     ctx.shadowColor = "rgba(37,99,235,0.18)";
     ctx.shadowBlur = 28;
     ctx.shadowOffsetY = 14;
@@ -403,6 +374,7 @@
     ctx.shadowColor = "transparent";
 
     const logo = document.getElementById("mainLogo");
+
     try {
       ctx.drawImage(logo, 365, 145, 350, 350);
     } catch (e) {}
@@ -424,14 +396,17 @@
 
     ctx.fillStyle = "#374151";
     ctx.font = "bold 42px Arial";
-    ctx.fillText("🔥 Seni %" + resultPercent + " tanıyorum!", 540, 790);
+    ctx.fillText("🔥 Seni %" + percent + " tanıyorum!", 540, 790);
+
     const dataUrl = canvas.toDataURL("image/png");
     document.getElementById("resultImage").src = dataUrl;
+
     resultBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   }
 
   window.shareResultImage = async function () {
-    const shareText ="";
+    const shareText =
+      "";
 
     if (resultBlob && navigator.canShare) {
       const file = new File([resultBlob], "hi-sonuc.png", { type: "image/png" });
@@ -485,4 +460,3 @@
 
 </body>
 </html>
-
